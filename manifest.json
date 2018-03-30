@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "LIGitHubPR",
-    "version": "1.2",
+    "version": "1.4",
 
     "description": "Add a file tree on GitHub PR views in order to improve navigation on PR with many files",
 
