@@ -2,14 +2,15 @@
 // @name     GitHub PR
 // @version  1
 // @grant    none
-// @match https://github.com/*/pull/*/files*
+// @match https://github.com/*
 // ==/UserScript==
 
-// <div>Icon made from <a href="http://www.onlinewebfonts.com/icon">Icon Fonts</a> is licensed by CC BY 3.0</div>
+// icons.tabIcon : Icon made from <a href="http://www.onlinewebfonts.com/icon">Icon Fonts</a> is licensed by CC BY 3.0
 
 var itemCount = 0;
 var totalFilesCountReached = false;
 var checkFileTotalInterval = null;
+var isRunning = false;
 
 var icons = {
     folder: '&#128447;',
@@ -18,6 +19,12 @@ var icons = {
 }
 
 function collectFiles() {
+    var tabCounter = document.getElementById('files_tab_counter');
+
+    if (tabCounter.length == 0) {
+        return;
+    }
+
     var expectedFilesCount = document.getElementById('files_tab_counter').textContent.trim();
     var files = document.querySelectorAll('.js-diff-progressive-container .link-gray-dark[title]');
     var input = [];
@@ -56,6 +63,10 @@ function collectFiles() {
 }
 
 function addToggler() {
+    if (document.querySelectorAll('.file-tree-toggler').length > 0) {
+        return;
+    }
+
     var html = '<a href="#" class="file-tree-toggler">' +
         icons.tabIcon +
         ' File tree' +
@@ -82,6 +93,15 @@ function addToggler() {
     });
 
     document.getElementsByTagName('body')[0].appendChild(togglerElement);
+}
+
+function removeToggler() {
+    let toggler = document.querySelectorAll('.file-tree-toggler');
+    if (toggler.length == 0) {
+        return;
+    }
+
+    toggler[0].parentNode.removeChild(toggler[0]);
 }
 
 function buildUI() {
@@ -185,7 +205,13 @@ function sortTreeItems(items) {
 }
 
 function runApplication() {
+
+    // @TODO: Make a polling loop to check current url and check if it matches with pull requests url pattern
+
+    isRunning = true;
+
     checkFileTotalInterval = setInterval(function() {
+        console.info('interval run');
         if (totalFilesCountReached === false) {
             collectFiles();
         } else {
@@ -193,6 +219,18 @@ function runApplication() {
             clearInterval(checkFileTotalInterval);
         }
     }, 1000);
+}
+
+function stopApplication() {
+    isRunning = false;
+    clearInterval(checkFileTotalInterval);
+    itemCount = 0;
+    totalFilesCountReached = false;
+    checkFileTotalInterval = null;
+    let treePanel = document.querySelectorAll('.pr-file-tree');
+    if (treePanel.length > 0) {
+        treePanel[0].parentNode.removeChild(treePanel[0]);
+    }
 }
 
 function initStyles() {
@@ -380,5 +418,15 @@ function hasClass(target, className) {
 }
 
 initStyles();
-addToggler();
-runApplication();
+
+setInterval(function() {
+    if (window.location.href.match(/https:\/\/github\.com\/.*\/pull\/.*/)) {
+        addToggler();
+        if (!isRunning) {
+            runApplication();
+        }
+    } else {
+        removeToggler();
+        stopApplication();
+    }
+},2000);
