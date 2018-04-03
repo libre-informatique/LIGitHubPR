@@ -26,7 +26,7 @@ function collectFiles() {
     }
 
     var expectedFilesCount = document.getElementById('files_tab_counter').textContent.trim();
-    var files = document.querySelectorAll('.js-diff-progressive-container .link-gray-dark[title]');
+    var files = document.querySelectorAll('.js-diff-progressive-container .file-info > a');
     var input = [];
 
     if (parseInt(expectedFilesCount, 10) == parseInt(files.length, 10)) {
@@ -38,6 +38,7 @@ function collectFiles() {
     }
 
     // See https://stackoverflow.com/a/6232943
+    // Convert delimited string into hierarchical JSON
     var output = [];
     for (var i = 0; i < input.length; i++) {
         var chain = input[i].path.split("/");
@@ -157,21 +158,23 @@ function displayItem(container, item, level) {
     itemCount++;
 
     var itemElement = createElementFromHTML(itemHtml);
-    if (item.isFile == false && level > 0) {
-        itemElement.classList.add('collapsed');
-        itemElement.classList.add('item-dir');
-        itemElement.querySelectorAll('span')[0].addEventListener('click', function(e) {
-            var elem = e.currentTarget.parentNode;
-            if (hasClass(elem, 'collapsed')) {
-                elem.classList.add('expanded');
-                elem.classList.remove('collapsed');
-            } else {
-                elem.classList.add('collapsed');
-                elem.classList.remove('expanded');
-            }
-        });
-    } else if (item.isFile == false && level == 0) {
-        itemElement.querySelectorAll('span')[0].innerHTML = '';
+    if (item.isFile == false) {
+        if (level > 0) {
+            itemElement.classList.add('collapsed');
+            itemElement.classList.add('item-dir');
+            itemElement.querySelectorAll('span')[0].addEventListener('click', function(e) {
+                var elem = e.currentTarget.parentNode;
+                if (hasClass(elem, 'collapsed')) {
+                    elem.classList.add('expanded');
+                    elem.classList.remove('collapsed');
+                } else {
+                    elem.classList.add('collapsed');
+                    elem.classList.remove('expanded');
+                }
+            });
+        } else if (level == 0) {
+            itemElement.querySelectorAll('span')[0].innerHTML = '';
+        }
     }
 
     container.appendChild(itemElement);
@@ -196,18 +199,15 @@ function sortTreeItems(items) {
 
         if (isFileA == isFileB) {
             if (nameA > nameB) return 1;
-            if (nameA < nameB) return -1;
         } else {
-            if (isFileA == false) return -1;
             if (isFileB == false) return 1;
         }
+
+        return -1;
     });
 }
 
 function runApplication() {
-
-    // @TODO: Make a polling loop to check current url and check if it matches with pull requests url pattern
-
     isRunning = true;
 
     checkFileTotalInterval = setInterval(function() {
@@ -429,4 +429,4 @@ setInterval(function() {
         removeToggler();
         stopApplication();
     }
-},2000);
+}, 2000);
